@@ -489,24 +489,26 @@ function highlightHitGrid(distance) {
 function getHitCombinations(distance) {
     const combos = [];
     
-    // Based on Table 3 from the article
-    // For each distance, list all combinations that can hit
     for (let die1 = 1; die1 <= 6; die1++) {
         for (let die2 = 1; die2 <= 6; die2++) {
             let canHit = false;
             
             if (distance <= 6) {
-                // Can hit with that number directly (single die) or with sum
+                // Can hit with single die or sum
                 canHit = die1 === distance || die2 === distance || die1 + die2 === distance;
             } else {
-                // For distances > 6, specific combinations
-                // Distance 7: need 7 (6-1, 5-2, 4-3)
-                // Distance 8: need 8 (6-2, 5-3, 4-4)  
-                // Distance 9: need 9 (6-3, 5-4)
-                // Distance 10: need 10 (6-4, 5-5)
-                // Distance 11: need 11 (6-5)
-                // Distance 12: need 12 (6-6)
+                // For distances > 6, need sum of both dice
                 canHit = die1 + die2 === distance;
+            }
+            
+            // Check doubles: with doubles you get 4 moves of that number
+            // So (n,n) can hit at n, 2n, 3n, or 4n
+            if (!canHit && die1 === die2) {
+                const dieValue = die1;
+                // Can hit if distance is a multiple of the die value (up to 4x)
+                if (distance === dieValue * 2 || distance === dieValue * 3 || distance === dieValue * 4) {
+                    canHit = true;
+                }
             }
             
             if (canHit) {

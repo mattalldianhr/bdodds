@@ -50,3 +50,5 @@ The key insight is that when rolling two dice, there are 36 equally likely outco
 
 This is why the probability of rolling a 7 (6 ways) is higher than rolling a 2 (1 way) or 12 (1 way).
 
+
+
