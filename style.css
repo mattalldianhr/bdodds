@@ -273,7 +273,7 @@ h2 {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    max-width: 600px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -341,36 +341,33 @@ h2 {
 
 .combinations-table {
     width: 100%;
-    max-width: 800px;
+    max-width: 600px;
     border-collapse: collapse;
     margin-top: 1rem;
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
+    table-layout: fixed;
 }
 
 .combinations-table thead {
     background: var(--grid-cell);
 }
 
-.combinations-table th {
-    padding: 0.75rem;
+.combinations-table th,
+.combinations-table td {
+    padding: 0.75rem 1rem;
     text-align: center;
-    font-weight: 600;
     border: 1px solid var(--border);
+    vertical-align: middle;
 }
 
+.combinations-table th {
+    font-weight: 600;
+}
 
 .combinations-table td {
-    padding: 0.5rem;
-    text-align: center;
-    border: 1px solid var(--border);
-}
-
-.combinations-table td:last-child {
-    text-align: left;
-    font-size: 0.9rem;
-    word-break: break-word;
+    font-size: 0.95rem;
 }
 
 .combinations-table tbody tr:nth-child(even) {
@@ -381,6 +378,38 @@ h2 {
     background: var(--grid-cell-highlight);
     font-weight: 600;
 }
+
+/* Sums table - 3 columns */
+#sumsTable th:nth-child(1),
+#sumsTable td:nth-child(1) { width: 30%; }
+#sumsTable th:nth-child(2),
+#sumsTable td:nth-child(2) { width: 30%; }
+#sumsTable th:nth-child(3),
+#sumsTable td:nth-child(3) { width: 40%; }
+
+/* Bar Entry table - 5 columns */
+#barTable { max-width: 700px; }
+#barTable th,
+#barTable td { width: 20%; }
+
+/* Hit Probability table - 4 columns */
+#hitTable th,
+#hitTable td { width: 25%; }
+
+/* Shot Odds table - 4 columns */
+#shotTable th,
+#shotTable td { width: 25%; }
+
+/* Bear-off table - 4 columns */
+#bearoffTable { max-width: 700px; }
+#bearoffTable th:nth-child(1),
+#bearoffTable td:nth-child(1) { width: 22%; }
+#bearoffTable th:nth-child(2),
+#bearoffTable td:nth-child(2) { width: 22%; }
+#bearoffTable th:nth-child(3),
+#bearoffTable td:nth-child(3) { width: 28%; }
+#bearoffTable th:nth-child(4),
+#bearoffTable td:nth-child(4) { width: 28%; }
 
 footer {
     margin-top: 3rem;
@@ -406,6 +435,13 @@ footer a:hover {
 
 footer em {
     font-style: italic;
+}
+
+footer .motto {
+    margin-top: 0.75rem;
+    font-style: italic;
+    color: var(--text);
+    font-weight: 500;
 }
 
 .section-description {
@@ -450,6 +486,55 @@ footer em {
 .point-toggle.blocked:hover {
     background: #c82333;
     border-color: #c82333;
+}
+
+/* Shot Odds Tab */
+.shot-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.shot-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.shot-input-group label {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.shot-result {
+    text-align: center;
+    padding: 1.25rem;
+    background: var(--accent-light);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    width: 100%;
+    border: 1px solid rgba(0, 102, 204, 0.2);
+}
+
+.shot-note {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--grid-cell);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: center;
+    width: 100%;
+}
+
+.shot-note em {
+    font-style: italic;
 }
 
 @media (max-width: 768px) {
@@ -515,7 +600,7 @@ footer em {
     }
 
     .dice-grid {
-        max-width: 100%;
+        width: 100%;
         gap: 1px;
     }
 
@@ -559,11 +644,18 @@ footer em {
 
     .combinations-table {
         font-size: 0.8rem;
+        max-width: 100%;
     }
 
     .combinations-table th,
     .combinations-table td {
-        padding: 0.5rem 0.25rem;
+        padding: 0.5rem 0.35rem;
+    }
+    
+    #barTable,
+    #bearoffTable,
+    #shotTable {
+        max-width: 100%;
     }
 
 
@@ -583,6 +675,28 @@ footer em {
         padding: 0.6rem 0.9rem;
         font-size: 0.9rem;
         min-width: 42px;
+    }
+
+    .shot-controls {
+        gap: 1rem;
+    }
+
+    .shot-input-group {
+        gap: 0.5rem;
+    }
+
+    .shot-input-group label {
+        font-size: 0.85rem;
+    }
+
+    .shot-result {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .shot-note {
+        font-size: 0.8rem;
+        padding: 0.5rem;
     }
 }
 

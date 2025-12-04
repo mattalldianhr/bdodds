@@ -19,6 +19,7 @@
             <button class="tab-button active" data-tab="sums">Sums</button>
             <button class="tab-button" data-tab="bar">Bar Entry</button>
             <button class="tab-button" data-tab="hit">Hit Probability</button>
+            <button class="tab-button" data-tab="shot">Shot Odds</button>
             <button class="tab-button" data-tab="bearoff">Bear-off</button>
         </div>
 
@@ -27,6 +28,7 @@
             <div class="tab-content active" id="sums-tab">
                 <div class="calculator-section">
                     <h2>Select a Sum</h2>
+                    <p class="section-description">Probability of rolling two dice that add up to a specific number</p>
                     <div class="sum-buttons" id="sumButtons"></div>
                     <div class="probability-info" id="probabilityInfo"></div>
                 </div>
@@ -91,6 +93,7 @@
             <div class="tab-content" id="hit-tab">
                 <div class="calculator-section">
                     <h2>Probability of Hitting a Blot</h2>
+                    <p class="section-description">Chance of reaching a blot X points away using either die or their sum</p>
                     <div class="hit-controls">
                         <div class="button-group">
                             <button class="option-button" data-value="1">1</button>
@@ -125,6 +128,66 @@
                             </tr>
                         </thead>
                         <tbody id="hitTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shot Odds Tab -->
+            <div class="tab-content" id="shot-tab">
+                <div class="calculator-section">
+                    <h2>Shot Odds Calculator</h2>
+                    <p class="section-description">Calculate hit probability with blocked points between you and the blot</p>
+                    <div class="shot-controls">
+                        <div class="shot-input-group">
+                            <label>Distance to blot:</label>
+                            <div class="button-group distance-buttons" id="shotDistanceGroup">
+                                <button class="option-button" data-value="1">1</button>
+                                <button class="option-button" data-value="2">2</button>
+                                <button class="option-button" data-value="3">3</button>
+                                <button class="option-button" data-value="4">4</button>
+                                <button class="option-button" data-value="5">5</button>
+                                <button class="option-button" data-value="6">6</button>
+                                <button class="option-button" data-value="7">7</button>
+                                <button class="option-button" data-value="8">8</button>
+                                <button class="option-button" data-value="9">9</button>
+                                <button class="option-button" data-value="10">10</button>
+                                <button class="option-button" data-value="11">11</button>
+                                <button class="option-button" data-value="12">12</button>
+                            </div>
+                        </div>
+                        <div class="shot-input-group">
+                            <label>Blocked points (click to toggle):</label>
+                            <div class="button-group point-toggles" id="shotBlockedGroup">
+                                <button class="point-toggle" data-point="1">1</button>
+                                <button class="point-toggle" data-point="2">2</button>
+                                <button class="point-toggle" data-point="3">3</button>
+                                <button class="point-toggle" data-point="4">4</button>
+                                <button class="point-toggle" data-point="5">5</button>
+                                <button class="point-toggle" data-point="6">6</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shot-result" id="shotResult"></div>
+                    <div class="shot-note">
+                        <em>Note: Ignores doubles' extra moves for simplicity. Shows direct shots only.</em>
+                    </div>
+                </div>
+                <div class="grid-section">
+                    <h2>The 36 Combinations</h2>
+                    <div class="dice-grid" id="shotGrid"></div>
+                </div>
+                <div class="combinations-table-section">
+                    <h2>All Distances</h2>
+                    <table class="combinations-table" id="shotTable">
+                        <thead>
+                            <tr>
+                                <th>Distance</th>
+                                <th>Ways</th>
+                                <th>Probability</th>
+                                <th>Odds Against</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shotTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -184,6 +247,7 @@
         
         <footer>
             <p>Based on <a href="https://bkgm.com/books/JacobyCrawford/BasicProbability/" target="_blank" rel="noopener noreferrer">Basic Probability</a> by Oswald Jacoby and John R. Crawford from <em>The Backgammon Book</em> (1970)</p>
+            <p class="motto">See you next Tuesday</p>
         </footer>
     </div>
 
