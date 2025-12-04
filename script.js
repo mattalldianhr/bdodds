@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSumButtons();
     initializeBarEntry();
     initializeHitProbability();
+    initializeShotOdds();
     initializeBearoff();
     // Initialize tables with default values
     updateSumsTable(2);
     updateBarTable(1);
     updateHitTable(1);
+    updateShotTable(6);
     updateBearoffTable(1, 0);
 });
 
@@ -62,6 +64,14 @@ function initializeTableForTab(tab) {
                 updateHitTable(1);
             }
             break;
+        case 'shot':
+            const activeShot = document.querySelector('#shot-tab .distance-buttons .option-button.active');
+            if (activeShot) {
+                updateShotOdds(parseInt(activeShot.dataset.value));
+            } else {
+                updateShotOdds(6);
+            }
+            break;
         case 'bearoff':
             const activeMan1 = document.querySelector('#bearoff-tab .bearoff-input-group:first-child .option-button.active');
             const activeMan2 = document.querySelector('#bearoff-tab .bearoff-input-group:last-child .option-button.active');
@@ -77,6 +87,7 @@ function initializeGrids() {
     createGrid('diceGrid');
     createGrid('barGrid');
     createGrid('hitGrid');
+    createGrid('shotGrid');
     createGrid('bearoffGrid');
 }
 
@@ -174,6 +185,9 @@ function initializeSumButtons() {
         
         container.appendChild(button);
     }
+    
+    // Select sum 7 by default (most common dice roll)
+    selectSum(7);
 }
 
 function selectSum(sum) {
@@ -520,53 +534,180 @@ function getHitCombinations(distance) {
     return combos;
 }
 
-// Bear-off Probability (Table 4)
-const bearoffTable = {
-    "12": { "6-6": { oneRoll: { ways: 4, percent: 11 }, twoRolls: 78 } },
-    "11": { "6-5": { oneRoll: { ways: 6, percent: 17 }, twoRolls: 88 } },
-    "10": { 
-        "5-5": { oneRoll: { ways: 6, percent: 17 }, twoRolls: 92 },
-        "6-4": { oneRoll: { ways: 8, percent: 22 }, twoRolls: 93 }
-    },
-    "9": {
-        "5-4": { oneRoll: { ways: 10, percent: 28 }, twoRolls: 96 },
-        "6-3": { oneRoll: { ways: 10, percent: 28 }, twoRolls: 97 }
-    },
-    "8": {
-        "4-4": { oneRoll: { ways: 11, percent: 31 }, twoRolls: 98 },
-        "6-2": { oneRoll: { ways: 13, percent: 36 }, twoRolls: 99 },
-        "5-3": { oneRoll: { ways: 14, percent: 39 }, twoRolls: 99 }
-    },
-    "7": {
-        "6-1": { oneRoll: { ways: 15, percent: 42 }, twoRolls: 99 },
-        "4-3": { oneRoll: { ways: 17, percent: 47 }, twoRolls: 99 },
-        "5-2": { oneRoll: { ways: 19, percent: 53 }, twoRolls: 99 }
-    },
-    "6": {
-        "3-3": { oneRoll: { ways: 17, percent: 47 }, twoRolls: 100 },
-        "5-1": { oneRoll: { ways: 23, percent: 64 }, twoRolls: 100 },
-        "4-2": { oneRoll: { ways: 23, percent: 64 }, twoRolls: 100 },
-        "6": { oneRoll: { ways: 27, percent: 75 }, twoRolls: 100 }
-    },
-    "5": {
-        "3-2": { oneRoll: { ways: 25, percent: 69 }, twoRolls: 100 },
-        "4-1": { oneRoll: { ways: 29, percent: 81 }, twoRolls: 100 },
-        "5": { oneRoll: { ways: 31, percent: 86 }, twoRolls: 100 }
-    },
-    "4": {
-        "2-2": { oneRoll: { ways: 26, percent: 72 }, twoRolls: 100 },
-        "3-1": { oneRoll: { ways: 34, percent: 94 }, twoRolls: 100 },
-        "4": { oneRoll: { ways: 34, percent: 94 }, twoRolls: 100 }
-    },
-    "3": {
-        "2-1": { oneRoll: { ways: 36, percent: 100 }, twoRolls: 100 },
-        "3": { oneRoll: { ways: 36, percent: 100 }, twoRolls: 100 }
-    },
-    "2": {
-        "1-1": { oneRoll: { ways: 36, percent: 100 }, twoRolls: 100 },
-        "2": { oneRoll: { ways: 36, percent: 100 }, twoRolls: 100 }
+// Shot Odds Calculator (Hit Probability with blocked points)
+// Ignores doubles' special power for simplicity - just treats all rolls as 2 moves
+
+let shotBlockedPoints = new Set();
+let currentShotDistance = 6;
+
+function initializeShotOdds() {
+    // Set up distance buttons
+    const distanceButtons = document.querySelectorAll('#shot-tab .distance-buttons .option-button');
+    distanceButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            distanceButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentShotDistance = parseInt(button.dataset.value);
+            updateShotOdds(currentShotDistance);
+        });
+    });
+    
+    // Set up blocked point toggles
+    const blockedButtons = document.querySelectorAll('#shotBlockedGroup .point-toggle');
+    blockedButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const point = parseInt(button.dataset.point);
+            
+            if (shotBlockedPoints.has(point)) {
+                shotBlockedPoints.delete(point);
+                button.classList.remove('blocked');
+            } else {
+                shotBlockedPoints.add(point);
+                button.classList.add('blocked');
+            }
+            
+            updateShotOdds(currentShotDistance);
+        });
+    });
+    
+    // Set initial selection (distance 6)
+    distanceButtons[5].classList.add('active');
+    updateShotOdds(6);
+}
+
+function updateShotOdds(distance) {
+    currentShotDistance = distance;
+    
+    // Calculate ways to hit at this distance with current blocked points
+    const waysToHit = calculateShotWays(distance, shotBlockedPoints);
+    const chance = Math.round((waysToHit / 36) * 100);
+    
+    // Calculate odds
+    let odds;
+    if (waysToHit === 0) {
+        odds = "Cannot hit";
+    } else if (waysToHit === 36) {
+        odds = "Always hits";
+    } else if (waysToHit > 18) {
+        const ratio = Math.round((waysToHit / (36 - waysToHit)) * 10) / 10;
+        odds = `${ratio} to 1 in favor`;
+    } else {
+        const ratio = Math.round(((36 - waysToHit) / waysToHit) * 10) / 10;
+        odds = `${ratio} to 1 against`;
     }
-};
+    
+    const result = document.getElementById('shotResult');
+    const blockedStr = shotBlockedPoints.size > 0 
+        ? Array.from(shotBlockedPoints).sort((a,b) => a-b).join(', ') 
+        : 'none';
+    
+    result.innerHTML = `
+        <div class="probability-display">${chance}% chance of hitting at distance ${distance}</div>
+        <div class="probability-details">${waysToHit} ways to hit out of 36</div>
+        <div class="probability-details">Blocked points: ${blockedStr}</div>
+        <div class="probability-details">Odds: ${odds}</div>
+    `;
+    
+    // Update grid
+    highlightShotGrid(distance, shotBlockedPoints);
+    
+    // Update table
+    updateShotTable(distance);
+}
+
+function calculateShotWays(distance, blocked) {
+    let ways = 0;
+    
+    for (let die1 = 1; die1 <= 6; die1++) {
+        for (let die2 = 1; die2 <= 6; die2++) {
+            if (canHitWithBlocks(die1, die2, distance, blocked)) {
+                ways++;
+            }
+        }
+    }
+    
+    return ways;
+}
+
+function canHitWithBlocks(die1, die2, distance, blocked) {
+    // Case 1: Direct hit with single die (no intermediate point needed)
+    if (die1 === distance || die2 === distance) {
+        return true;
+    }
+    
+    // Case 2: Sum of dice equals distance - need to check for clear path
+    if (die1 + die2 === distance) {
+        // Path 1: Move die1 first (land on point die1), then die2 to reach distance
+        // Path 2: Move die2 first (land on point die2), then die1 to reach distance
+        // Can hit if EITHER path is clear (intermediate point not blocked)
+        const path1Clear = !blocked.has(die1);
+        const path2Clear = !blocked.has(die2);
+        
+        if (path1Clear || path2Clear) {
+            return true;
+        }
+    }
+    
+    // Note: We're intentionally ignoring doubles' special power (4 moves)
+    // This simplifies the calculation and focuses on "direct" shots
+    
+    return false;
+}
+
+function highlightShotGrid(distance, blocked) {
+    clearGridHighlights('shotGrid');
+    const grid = document.getElementById('shotGrid');
+    if (!grid) return;
+    
+    grid.querySelectorAll('.grid-cell').forEach(cell => {
+        const die1 = parseInt(cell.dataset.die1);
+        const die2 = parseInt(cell.dataset.die2);
+        
+        if (canHitWithBlocks(die1, die2, distance, blocked)) {
+            cell.classList.add('highlighted');
+        }
+    });
+}
+
+function updateShotTable(selectedDistance) {
+    const tbody = document.getElementById('shotTableBody');
+    tbody.innerHTML = '';
+    
+    // Show all distances (1-12)
+    for (let dist = 1; dist <= 12; dist++) {
+        const ways = calculateShotWays(dist, shotBlockedPoints);
+        const chance = Math.round((ways / 36) * 100);
+        
+        let odds;
+        if (ways === 0) {
+            odds = "—";
+        } else if (ways >= 18) {
+            const ratio = Math.round((ways / (36 - ways)) * 10) / 10;
+            odds = ways === 36 ? "Always" : `${ratio}:1 favor`;
+        } else {
+            const ratio = Math.round(((36 - ways) / ways) * 10) / 10;
+            odds = `${ratio}:1`;
+        }
+        
+        const row = document.createElement('tr');
+        const isHighlighted = dist === selectedDistance;
+        
+        if (isHighlighted) {
+            row.classList.add('highlighted-row');
+        }
+        
+        row.innerHTML = `
+            <td>${dist}</td>
+            <td>${ways}</td>
+            <td>${chance}%</td>
+            <td>${odds}</td>
+        `;
+        
+        tbody.appendChild(row);
+    }
+}
+
+// Bear-off Probability (calculated dynamically)
 
 function initializeBearoff() {
     // Get button groups
@@ -606,68 +747,31 @@ function updateBearoff(man1, man2) {
     const result = document.getElementById('bearoffResult');
     
     if (man2 === 0) {
-        // One man - look up in table
-        const total = man1.toString();
-        const key = man1.toString();
-        const tableEntry = bearoffTable[total];
+        // One man - calculate directly
+        const ways = calculateBearoffWaysOneMan(man1);
+        const percent = Math.round((ways / 36) * 100);
+        const twoRolls = calculateTwoRollProbability(ways);
         
-        if (tableEntry && tableEntry[key]) {
-            const data = tableEntry[key];
-            result.innerHTML = `
-                <div class="probability-display">One man on point ${man1}</div>
-                <div class="probability-details">In one roll: ${data.oneRoll.percent}% (${data.oneRoll.ways} ways)</div>
-                <div class="probability-details">In two rolls: ${data.twoRolls}%</div>
-            `;
-            highlightBearoffGrid(man1, 0, data.oneRoll.ways);
-            updateBearoffTable(man1, 0);
-        } else {
-            const ways = calculateBearoffWaysOneMan(man1);
-            const percent = Math.round((ways / 36) * 100);
-            const twoRolls = calculateTwoRollProbability(ways);
-            
-            result.innerHTML = `
-                <div class="probability-display">One man on point ${man1}</div>
-                <div class="probability-details">In one roll: ${percent}% (${ways} ways)</div>
-                <div class="probability-details">In two rolls: ${twoRolls}%</div>
-            `;
-            highlightBearoffGrid(man1, 0, ways);
-            updateBearoffTable(man1, 0);
-        }
+        result.innerHTML = `
+            <div class="probability-display">One man on point ${man1}</div>
+            <div class="probability-details">In one roll: ${percent}% (${ways} ways out of 36)</div>
+            <div class="probability-details">In two rolls: ${twoRolls}%</div>
+        `;
+        highlightBearoffGrid(man1, 0);
+        updateBearoffTable(man1, 0);
     } else {
-        // Two men - look up in table
-        const total = (man1 + man2).toString();
-        const key1 = `${Math.min(man1, man2)}-${Math.max(man1, man2)}`;
-        const key2 = `${man1}-${man2}`;
-        const tableEntry = bearoffTable[total];
+        // Two men - calculate directly
+        const ways = calculateBearoffWaysTwoMen(man1, man2);
+        const percent = Math.round((ways / 36) * 100);
+        const twoRolls = calculateTwoRollProbability(ways);
         
-        let data = null;
-        if (tableEntry) {
-            data = tableEntry[key1] || tableEntry[key2];
-        }
-        
-        if (data) {
-            result.innerHTML = `
-                <div class="probability-display">Two men on points ${man1} and ${man2}</div>
-                <div class="probability-details">Total: ${man1 + man2} points</div>
-                <div class="probability-details">In one roll: ${data.oneRoll.percent}% (${data.oneRoll.ways} ways)</div>
-                <div class="probability-details">In two rolls: ${data.twoRolls}%</div>
-            `;
-            highlightBearoffGrid(man1, man2, data.oneRoll.ways);
-            updateBearoffTable(man1, man2);
-        } else {
-            const ways = calculateBearoffWaysTwoMen(man1, man2);
-            const percent = Math.round((ways / 36) * 100);
-            const twoRolls = calculateTwoRollProbability(ways);
-            
-            result.innerHTML = `
-                <div class="probability-display">Two men on points ${man1} and ${man2}</div>
-                <div class="probability-details">Total: ${man1 + man2} points</div>
-                <div class="probability-details">In one roll: ${percent}% (${ways} ways)</div>
-                <div class="probability-details">In two rolls: ${twoRolls}%</div>
-            `;
-            highlightBearoffGrid(man1, man2, ways);
-            updateBearoffTable(man1, man2);
-        }
+        result.innerHTML = `
+            <div class="probability-display">Two men on points ${man1} and ${man2}</div>
+            <div class="probability-details">In one roll: ${percent}% (${ways} ways out of 36)</div>
+            <div class="probability-details">In two rolls: ${twoRolls}%</div>
+        `;
+        highlightBearoffGrid(man1, man2);
+        updateBearoffTable(man1, man2);
     }
 }
 
@@ -712,10 +816,7 @@ function updateBearoffTable(man1, man2) {
     // Sort by total points
     twoManPositions.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
     
-    // Limit to most common/relevant positions (total <= 8 for practical purposes)
-    const relevantPositions = twoManPositions.filter(([p1, p2]) => p1 + p2 <= 8);
-    
-    for (const [p1, p2] of relevantPositions) {
+    for (const [p1, p2] of twoManPositions) {
         const ways = calculateBearoffWaysTwoMen(p1, p2);
         const percent = Math.round((ways / 36) * 100);
         const twoRolls = calculateTwoRollProbability(ways);
@@ -738,12 +839,11 @@ function updateBearoffTable(man1, man2) {
     }
 }
 
-function highlightBearoffGrid(man1, man2, targetWays) {
+function highlightBearoffGrid(man1, man2) {
     clearGridHighlights('bearoffGrid');
     const grid = document.getElementById('bearoffGrid');
     if (!grid) return;
     
-    let highlighted = 0;
     grid.querySelectorAll('.grid-cell').forEach(cell => {
         const die1 = parseInt(cell.dataset.die1);
         const die2 = parseInt(cell.dataset.die2);
@@ -751,8 +851,8 @@ function highlightBearoffGrid(man1, man2, targetWays) {
         let canBearOff = false;
         
         if (man2 === 0) {
-            // One man - can bear off if at least one die >= point
-            canBearOff = die1 >= man1 || die2 >= man1;
+            // One man - can bear off with sum of dice (move then bear off if needed)
+            canBearOff = canBearOffOneMan(die1, die2, man1);
         } else {
             // Two men - need to bear off both
             canBearOff = canBearOffTwoMen(die1, die2, man1, man2);
@@ -760,23 +860,39 @@ function highlightBearoffGrid(man1, man2, targetWays) {
         
         if (canBearOff) {
             cell.classList.add('highlighted');
-            highlighted++;
         }
     });
 }
 
-function canBearOffTwoMen(die1, die2, point1, point2) {
-    // Check all possible assignments of dice to men
-    if (point1 === point2) {
-        // Both on same point
-        return (die1 >= point1 && die2 >= point1) || die1 >= point1 * 2 || die2 >= point1 * 2;
+function canBearOffOneMan(die1, die2, point) {
+    const isDouble = die1 === die2;
+    
+    if (isDouble) {
+        // With doubles, you get 4 moves of that value
+        // Moves needed = ceil(point / die)
+        return Math.ceil(point / die1) <= 4;
     } else {
-        // Different points
+        // With non-doubles, you have 2 moves
+        // Can move with one die then bear off with the other
+        // Works if die1 + die2 >= point
+        return die1 + die2 >= point;
+    }
+}
+
+function canBearOffTwoMen(die1, die2, point1, point2) {
+    const isDouble = die1 === die2;
+    
+    if (isDouble) {
+        // With doubles, you get 4 moves of that number
+        // A checker on point p needs ceil(p/die) moves to bear off
+        // Total moves needed must be <= 4
+        const movesNeeded = Math.ceil(point1 / die1) + Math.ceil(point2 / die1);
+        return movesNeeded <= 4;
+    } else {
+        // With non-doubles, need to assign each die to a man
+        // Can't use the same die twice
         return (die1 >= point1 && die2 >= point2) ||
-               (die1 >= point2 && die2 >= point1) ||
-               (die1 >= Math.max(point1, point2) && die2 >= Math.min(point1, point2)) ||
-               (die1 >= point1 && die1 >= point2) ||
-               (die2 >= point1 && die2 >= point2);
+               (die1 >= point2 && die2 >= point1);
     }
 }
 
@@ -784,7 +900,7 @@ function calculateBearoffWaysOneMan(point) {
     let ways = 0;
     for (let die1 = 1; die1 <= 6; die1++) {
         for (let die2 = 1; die2 <= 6; die2++) {
-            if (die1 >= point || die2 >= point) {
+            if (canBearOffOneMan(die1, die2, point)) {
                 ways++;
             }
         }
