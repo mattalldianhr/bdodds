@@ -396,10 +396,6 @@ h2 {
 #hitTable th,
 #hitTable td { width: 25%; }
 
-/* Shot Odds table - 4 columns */
-#shotTable th,
-#shotTable td { width: 25%; }
-
 /* Bear-off table - 4 columns */
 #bearoffTable { max-width: 700px; }
 #bearoffTable th:nth-child(1),
@@ -435,13 +431,6 @@ footer a:hover {
 
 footer em {
     font-style: italic;
-}
-
-footer .motto {
-    margin-top: 0.75rem;
-    font-style: italic;
-    color: var(--text);
-    font-weight: 500;
 }
 
 .section-description {
@@ -653,8 +642,7 @@ footer .motto {
     }
     
     #barTable,
-    #bearoffTable,
-    #shotTable {
+    #bearoffTable {
         max-width: 100%;
     }
 

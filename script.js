@@ -816,7 +816,10 @@ function updateBearoffTable(man1, man2) {
     // Sort by total points
     twoManPositions.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
     
-    for (const [p1, p2] of twoManPositions) {
+    // Limit to most common/relevant positions (total <= 8 for practical purposes)
+    const relevantPositions = twoManPositions.filter(([p1, p2]) => p1 + p2 <= 8);
+    
+    for (const [p1, p2] of relevantPositions) {
         const ways = calculateBearoffWaysTwoMen(p1, p2);
         const percent = Math.round((ways / 36) * 100);
         const twoRolls = calculateTwoRollProbability(ways);

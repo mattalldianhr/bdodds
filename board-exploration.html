@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backgammon Board Exploration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #14141f;
+            --surface-2: #1a1a2e;
+            --border: #2a2a3e;
+            --text: #e8e8f0;
+            --text-muted: #8888a0;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --point-dark: #1e3a5f;
+            --point-light: #dc2626;
+            --checker-white: #f5f5f5;
+            --checker-black: #1a1a1a;
+            --checker-white-border: #d4d4d4;
+            --checker-black-border: #404040;
+            --board-felt: #0d5c2e;
+            --board-wood: #8b4513;
+            --bar: #2d1810;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .designs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .design-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        .design-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .design-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .design-tag {
+            background: var(--accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .design-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+            background: var(--surface-2);
+            border-radius: 12px;
+        }
+
+        /* ============================================
+           DESIGN 1: Classic Horizontal
+           ============================================ */
+        .board-classic {
+            --board-width: min(100%, 600px);
+            --point-width: calc(var(--board-width) / 14);
+            --board-height: calc(var(--point-width) * 5);
+            --checker-size: calc(var(--point-width) * 0.85);
+            
+            width: var(--board-width);
+            aspect-ratio: 1.5 / 1;
+            background: var(--board-felt);
+            border: 8px solid var(--board-wood);
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 6fr 1fr 6fr;
+            grid-template-rows: 1fr 1fr;
+            position: relative;
+            box-shadow: 
+                inset 0 0 30px rgba(0,0,0,0.4),
+                0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .board-classic .quadrant {
+            display: flex;
+            padding: 4px;
+        }
+
+        .board-classic .quadrant.top { align-items: flex-start; }
+        .board-classic .quadrant.bottom { align-items: flex-end; }
+        .board-classic .quadrant.top .point { flex-direction: column; }
+        .board-classic .quadrant.bottom .point { flex-direction: column-reverse; }
+
+        .board-classic .bar {
+            background: var(--bar);
+            grid-row: span 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .board-classic .point {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .board-classic .point::before {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 85%;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            left: 5%;
+        }
+
+        .board-classic .quadrant.top .point::before {
+            top: 0;
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+        }
+
+        .board-classic .quadrant.bottom .point::before {
+            bottom: 0;
+        }
+
+        .board-classic .point.dark::before { background: var(--point-dark); }
+        .board-classic .point.light::before { background: var(--point-light); }
+
+        .board-classic .checker {
+            width: var(--checker-size);
+            height: var(--checker-size);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            margin: 1px auto;
+            box-shadow: 
+                inset 0 2px 4px rgba(255,255,255,0.3),
+                inset 0 -2px 4px rgba(0,0,0,0.3),
+                0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .board-classic .checker.white {
+            background: linear-gradient(145deg, #ffffff, #e0e0e0);
+            border: 2px solid var(--checker-white-border);
+        }
+
+        .board-classic .checker.black {
+            background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
+            border: 2px solid var(--checker-black-border);
+        }
+
+        /* ============================================
+           DESIGN 2: Vertical Mobile-First
+           ============================================ */
+        .board-vertical {
+            --board-width: min(100%, 320px);
+            --checker-size: calc(var(--board-width) / 14);
+            
+            width: var(--board-width);
+            aspect-ratio: 0.7 / 1;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 3px solid var(--accent);
+            border-radius: 12px;
+            display: grid;
+            grid-template-rows: 6fr 0.8fr 6fr;
+            padding: 8px;
+            box-shadow: 
+                0 0 20px var(--accent-glow),
+                inset 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .board-vertical .half {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2px;
+        }
+
+        .board-vertical .bar-horizontal {
+            background: var(--surface);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .board-vertical .point-v {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .board-vertical .half.top .point-v {
+            justify-content: flex-start;
+        }
+
+        .board-vertical .half.bottom .point-v {
+            justify-content: flex-end;
+            flex-direction: column-reverse;
+        }
+
+        .board-vertical .point-v::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 80%;
+            opacity: 0.8;
+        }
+
+        .board-vertical .half.top .point-v::before {
+            top: 0;
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+        }
+
+        .board-vertical .half.bottom .point-v::before {
+            bottom: 0;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .board-vertical .point-v.dark::before { 
+            background: linear-gradient(180deg, var(--point-dark), transparent);
+        }
+        .board-vertical .point-v.light::before { 
+            background: linear-gradient(180deg, var(--point-light), transparent);
+        }
+
+        .board-vertical .checker-v {
+            width: var(--checker-size);
+            height: var(--checker-size);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            margin: 1px 0;
+        }
+
+        .board-vertical .checker-v.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #cccccc);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .board-vertical .checker-v.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, #1a1a1a);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* ============================================
+           DESIGN 3: Minimal Compact
+           ============================================ */
+        .board-minimal {
+            --board-size: min(100%, 300px);
+            --checker-size: calc(var(--board-size) / 16);
+            
+            width: var(--board-size);
+            aspect-ratio: 1 / 1;
+            background: #1a1a1a;
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            grid-template-rows: repeat(11, 1fr);
+            gap: 1px;
+            padding: 8px;
+        }
+
+        .board-minimal .point-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board-minimal .point-cell.dark { background: #2d3748; }
+        .board-minimal .point-cell.light { background: #e53e3e; }
+        .board-minimal .point-cell.bar { background: #4a5568; }
+        .board-minimal .point-cell.empty { background: transparent; }
+
+        .board-minimal .mini-checker {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+        }
+
+        .board-minimal .mini-checker.white {
+            background: #f7fafc;
+            border: 1px solid #cbd5e0;
+        }
+
+        .board-minimal .mini-checker.black {
+            background: #1a202c;
+            border: 1px solid #4a5568;
+        }
+
+        /* ============================================
+           DESIGN 4: Ultra Mobile (Single Column Points)
+           ============================================ */
+        .board-ultra {
+            --board-width: min(100%, 280px);
+            --checker-size: 24px;
+            
+            width: var(--board-width);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .board-ultra .board-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        .board-ultra .point-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            width: 20px;
+        }
+
+        .board-ultra .point-indicator {
+            width: 8px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .board-ultra .point-indicator.dark { background: var(--point-dark); }
+        .board-ultra .point-indicator.light { background: var(--point-light); }
+
+        .board-ultra .checker-stack {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            padding: 0 8px;
+        }
+
+        .board-ultra .checker-u {
+            width: var(--checker-size);
+            height: var(--checker-size);
+            border-radius: 50%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .board-ultra .checker-u.white {
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            color: #1a1a1a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .board-ultra .checker-u.black {
+            background: linear-gradient(145deg, #374151, #1f2937);
+            color: #f8fafc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .board-ultra .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            margin: 8px 0;
+        }
+
+        /* ============================================
+           DESIGN 5: Landscape Mobile (Phone Rotated)
+           Styled to match main site (light theme, blue accent)
+           ============================================ */
+        .board-landscape {
+            --board-width: min(100%, 500px);
+            --checker-size: clamp(16px, 4vw, 24px);
+            --point-height: 42%;
+            
+            width: var(--board-width);
+            aspect-ratio: 1.5 / 1;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: auto 1fr 1fr auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Point number rows */
+        .board-landscape .point-numbers {
+            display: flex;
+            padding: 4px 8px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .board-landscape .point-numbers.bottom-nums {
+            border-bottom: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .board-landscape .point-numbers span {
+            flex: 1;
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #666;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Bar styling */
+        .board-landscape .bar-l {
+            background: linear-gradient(180deg, #e0e0e0, #d0d0d0);
+            grid-row: 1 / -1;
+            grid-column: 2;
+            width: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+        }
+
+        .board-landscape .bar-l span {
+            writing-mode: vertical-rl;
+            font-size: 0.6rem;
+            color: #888;
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        /* Quadrant containers */
+        .board-landscape .quad {
+            display: flex;
+            background: #f0f0f0;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .board-landscape .quad.top {
+            align-items: flex-start;
+        }
+
+        .board-landscape .quad.bottom {
+            align-items: flex-end;
+        }
+
+        /* Individual points */
+        .board-landscape .point-l {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            min-width: 0;
+            height: 100%;
+        }
+
+        .board-landscape .quad.top .point-l {
+            justify-content: flex-start;
+        }
+
+        .board-landscape .quad.bottom .point-l {
+            justify-content: flex-end;
+            flex-direction: column-reverse;
+        }
+
+        /* Triangle points */
+        .board-landscape .point-l .triangle {
+            position: absolute;
+            width: 90%;
+            height: var(--point-height);
+            left: 5%;
+        }
+
+        .board-landscape .quad.top .point-l .triangle {
+            top: 0;
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+        }
+
+        .board-landscape .quad.bottom .point-l .triangle {
+            bottom: 0;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .board-landscape .point-l.dark .triangle {
+            background: #0066cc;
+        }
+
+        .board-landscape .point-l.light .triangle {
+            background: #cc3333;
+        }
+
+        /* Checkers */
+        .board-landscape .checker-l {
+            width: var(--checker-size);
+            height: var(--checker-size);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+            margin: 1px 0;
+            flex-shrink: 0;
+        }
+
+        .board-landscape .checker-l.white {
+            background: linear-gradient(145deg, #ffffff, #e8e8e8);
+            border: 2px solid #d0d0d0;
+            box-shadow: 
+                inset 0 2px 4px rgba(255,255,255,0.8),
+                inset 0 -2px 4px rgba(0,0,0,0.1),
+                0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .board-landscape .checker-l.black {
+            background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
+            border: 2px solid #444;
+            box-shadow: 
+                inset 0 2px 4px rgba(255,255,255,0.1),
+                inset 0 -2px 4px rgba(0,0,0,0.3),
+                0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Stacked checker count indicator */
+        .board-landscape .checker-l.stacked::after {
+            content: attr(data-count);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.6rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .board-landscape .checker-l.white.stacked::after {
+            color: #333;
+        }
+
+        .board-landscape .checker-l.black.stacked::after {
+            color: #fff;
+        }
+
+        /* ============================================
+           DESIGN 6: Radial/Circular Concept
+           ============================================ */
+        .board-radial {
+            --board-size: min(100%, 320px);
+            --checker-size: 20px;
+            
+            width: var(--board-size);
+            aspect-ratio: 1 / 1;
+            background: conic-gradient(
+                from 0deg,
+                var(--point-dark) 0deg 15deg,
+                var(--point-light) 15deg 30deg,
+                var(--point-dark) 30deg 45deg,
+                var(--point-light) 45deg 60deg,
+                var(--point-dark) 60deg 75deg,
+                var(--point-light) 75deg 90deg,
+                var(--point-dark) 90deg 105deg,
+                var(--point-light) 105deg 120deg,
+                var(--point-dark) 120deg 135deg,
+                var(--point-light) 135deg 150deg,
+                var(--point-dark) 150deg 165deg,
+                var(--point-light) 165deg 180deg,
+                var(--point-dark) 180deg 195deg,
+                var(--point-light) 195deg 210deg,
+                var(--point-dark) 210deg 225deg,
+                var(--point-light) 225deg 240deg,
+                var(--point-dark) 240deg 255deg,
+                var(--point-light) 255deg 270deg,
+                var(--point-dark) 270deg 285deg,
+                var(--point-light) 285deg 300deg,
+                var(--point-dark) 300deg 315deg,
+                var(--point-light) 315deg 330deg,
+                var(--point-dark) 330deg 345deg,
+                var(--point-light) 345deg 360deg
+            );
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                0 0 0 8px var(--board-wood),
+                0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .board-radial::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 60%;
+            height: 60%;
+            background: var(--board-felt);
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .board-radial::after {
+            content: 'Experimental';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Responsive - keeping single column for mobile testing */
+        @media (min-width: 768px) {
+            .designs-grid {
+                max-width: 600px;
+            }
+        }
+
+        /* Size Toggle */
+        .size-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .size-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .size-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .size-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .preview-frame {
+            transition: width 0.3s ease;
+            margin: 0 auto;
+        }
+
+        .preview-frame.mobile {
+            max-width: 375px;
+        }
+
+        .preview-frame.tablet {
+            max-width: 768px;
+        }
+
+        .preview-frame.desktop {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Board Design Exploration</h1>
+            <p class="subtitle">Mobile-first backgammon board concepts</p>
+        </header>
+
+        <div class="size-toggle">
+            <button class="size-btn active" data-size="mobile">📱 Mobile (375px)</button>
+            <button class="size-btn" data-size="tablet">📱 Tablet (768px)</button>
+            <button class="size-btn" data-size="desktop">🖥️ Desktop (full)</button>
+        </div>
+
+        <div class="preview-frame mobile">
+            <div class="designs-grid">
+                
+                <!-- Design 1: Classic Horizontal -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">Classic Horizontal</h2>
+                        <span class="design-tag">Traditional</span>
+                    </div>
+                    <p class="design-description">Traditional layout scaled responsively. Works well on tablets/desktop, tight on mobile.</p>
+                    <div class="board-container">
+                        <div class="board-classic" id="board1"></div>
+                    </div>
+                </div>
+
+                <!-- Design 2: Vertical Mobile-First -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">Vertical Portrait</h2>
+                        <span class="design-tag">Mobile-First</span>
+                    </div>
+                    <p class="design-description">Rotated 90° for portrait orientation. Points run top-to-bottom instead of left-to-right.</p>
+                    <div class="board-container">
+                        <div class="board-vertical" id="board2"></div>
+                    </div>
+                </div>
+
+                <!-- Design 3: Minimal Compact -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">Minimal Grid</h2>
+                        <span class="design-tag">Compact</span>
+                    </div>
+                    <p class="design-description">Simplified grid layout. Each cell = one checker position. Very compact.</p>
+                    <div class="board-container">
+                        <div class="board-minimal" id="board3"></div>
+                    </div>
+                </div>
+
+                <!-- Design 4: Ultra Mobile -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">List View</h2>
+                        <span class="design-tag">Ultra Mobile</span>
+                    </div>
+                    <p class="design-description">Each point as a row. Extremely readable on mobile, less traditional look.</p>
+                    <div class="board-container">
+                        <div class="board-ultra" id="board4"></div>
+                    </div>
+                </div>
+
+                <!-- Design 5: Landscape Mobile -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">Landscape Mobile</h2>
+                        <span class="design-tag">Phone Rotated</span>
+                    </div>
+                    <p class="design-description">Classic layout optimized for phone in landscape orientation. Rotate your phone sideways!</p>
+                    <div class="board-container">
+                        <div class="board-landscape" id="board5"></div>
+                    </div>
+                </div>
+
+                <!-- Design 6: Radial -->
+                <div class="design-card">
+                    <div class="design-header">
+                        <h2 class="design-title">Radial Concept</h2>
+                        <span class="design-tag">Experimental</span>
+                    </div>
+                    <p class="design-description">Wild idea: circular board with points as pie slices. Probably too crazy but fun to explore!</p>
+                    <div class="board-container">
+                        <div class="board-radial" id="board6"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Starting position: standard backgammon setup
+        const startingPosition = {
+            // Point number: [count, color] (positive = white, negative = black)
+            1: [2, 'black'],
+            6: [5, 'white'],
+            8: [3, 'white'],
+            12: [5, 'black'],
+            13: [5, 'white'],
+            17: [3, 'black'],
+            19: [5, 'black'],
+            24: [2, 'white']
+        };
+
+        // Build Classic Board
+        function buildClassicBoard() {
+            const board = document.getElementById('board1');
+            board.innerHTML = '';
+
+            // Top left (points 13-18)
+            const topLeft = document.createElement('div');
+            topLeft.className = 'quadrant top';
+            for (let i = 13; i <= 18; i++) {
+                const point = createClassicPoint(i);
+                topLeft.appendChild(point);
+            }
+            board.appendChild(topLeft);
+
+            // Bar
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            board.appendChild(bar);
+
+            // Top right (points 19-24)
+            const topRight = document.createElement('div');
+            topRight.className = 'quadrant top';
+            for (let i = 19; i <= 24; i++) {
+                const point = createClassicPoint(i);
+                topRight.appendChild(point);
+            }
+            board.appendChild(topRight);
+
+            // Bottom left (points 12-7)
+            const bottomLeft = document.createElement('div');
+            bottomLeft.className = 'quadrant bottom';
+            for (let i = 12; i >= 7; i--) {
+                const point = createClassicPoint(i);
+                bottomLeft.appendChild(point);
+            }
+            board.appendChild(bottomLeft);
+
+            // Bar placeholder (spans both rows via CSS)
+
+            // Bottom right (points 6-1)
+            const bottomRight = document.createElement('div');
+            bottomRight.className = 'quadrant bottom';
+            for (let i = 6; i >= 1; i--) {
+                const point = createClassicPoint(i);
+                bottomRight.appendChild(point);
+            }
+            board.appendChild(bottomRight);
+        }
+
+        function createClassicPoint(num) {
+            const point = document.createElement('div');
+            point.className = `point ${num % 2 === 0 ? 'dark' : 'light'}`;
+            
+            const pos = startingPosition[num];
+            if (pos) {
+                for (let i = 0; i < pos[0]; i++) {
+                    const checker = document.createElement('div');
+                    checker.className = `checker ${pos[1]}`;
+                    point.appendChild(checker);
+                }
+            }
+            
+            return point;
+        }
+
+        // Build Vertical Board
+        function buildVerticalBoard() {
+            const board = document.getElementById('board2');
+            board.innerHTML = '';
+
+            // Top half (points 13-24)
+            const topHalf = document.createElement('div');
+            topHalf.className = 'half top';
+            for (let i = 13; i <= 24; i++) {
+                const point = createVerticalPoint(i);
+                topHalf.appendChild(point);
+            }
+            board.appendChild(topHalf);
+
+            // Bar
+            const bar = document.createElement('div');
+            bar.className = 'bar-horizontal';
+            bar.innerHTML = '<span style="color: var(--text-muted); font-size: 0.7rem;">BAR</span>';
+            board.appendChild(bar);
+
+            // Bottom half (points 12-1)
+            const bottomHalf = document.createElement('div');
+            bottomHalf.className = 'half bottom';
+            for (let i = 12; i >= 1; i--) {
+                const point = createVerticalPoint(i);
+                bottomHalf.appendChild(point);
+            }
+            board.appendChild(bottomHalf);
+        }
+
+        function createVerticalPoint(num) {
+            const point = document.createElement('div');
+            point.className = `point-v ${num % 2 === 0 ? 'dark' : 'light'}`;
+            
+            const pos = startingPosition[num];
+            if (pos) {
+                for (let i = 0; i < Math.min(pos[0], 5); i++) {
+                    const checker = document.createElement('div');
+                    checker.className = `checker-v ${pos[1]}`;
+                    point.appendChild(checker);
+                }
+            }
+            
+            return point;
+        }
+
+        // Build Ultra Mobile Board
+        function buildUltraBoard() {
+            const board = document.getElementById('board4');
+            board.innerHTML = '';
+
+            // Points 13-24 (opponent's home board to outer)
+            for (let i = 24; i >= 13; i--) {
+                board.appendChild(createUltraRow(i));
+            }
+
+            const divider = document.createElement('div');
+            divider.className = 'divider';
+            board.appendChild(divider);
+
+            // Points 12-1 (outer to home board)
+            for (let i = 12; i >= 1; i--) {
+                board.appendChild(createUltraRow(i));
+            }
+        }
+
+        function createUltraRow(num) {
+            const row = document.createElement('div');
+            row.className = 'board-row';
+            
+            const pointNum = document.createElement('span');
+            pointNum.className = 'point-num';
+            pointNum.textContent = num;
+            row.appendChild(pointNum);
+
+            const indicator = document.createElement('div');
+            indicator.className = `point-indicator ${num % 2 === 0 ? 'dark' : 'light'}`;
+            row.appendChild(indicator);
+
+            const stack = document.createElement('div');
+            stack.className = 'checker-stack';
+            
+            const pos = startingPosition[num];
+            if (pos) {
+                for (let i = 0; i < pos[0]; i++) {
+                    const checker = document.createElement('div');
+                    checker.className = `checker-u ${pos[1]}`;
+                    stack.appendChild(checker);
+                }
+            }
+            row.appendChild(stack);
+            
+            return row;
+        }
+
+        // Size toggle functionality
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const frame = document.querySelector('.preview-frame');
+                frame.className = `preview-frame ${btn.dataset.size}`;
+            });
+        });
+
+        // Build Minimal Grid Board
+        function buildMinimalBoard() {
+            const board = document.getElementById('board3');
+            board.innerHTML = '';
+            
+            // Create a simple grid representation
+            // 13 columns (6 + bar + 6), 11 rows (5 checkers max each side + divider)
+            for (let row = 0; row < 11; row++) {
+                for (let col = 0; col < 13; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'point-cell';
+                    
+                    // Middle column is bar
+                    if (col === 6) {
+                        cell.classList.add('bar');
+                    } else {
+                        // Determine point number
+                        let pointNum;
+                        if (row < 5) {
+                            // Top half (points 13-24)
+                            pointNum = col < 6 ? 13 + col : 13 + col;
+                        } else if (row === 5) {
+                            cell.classList.add('empty');
+                        } else {
+                            // Bottom half (points 12-1)
+                            pointNum = col < 6 ? 12 - col : 12 - col;
+                        }
+                        
+                        if (row !== 5) {
+                            cell.classList.add(pointNum % 2 === 0 ? 'dark' : 'light');
+                            
+                            // Add checker if position has one at this row depth
+                            const pos = startingPosition[pointNum];
+                            if (pos) {
+                                const depth = row < 5 ? row : row - 6;
+                                if (depth < pos[0]) {
+                                    const checker = document.createElement('div');
+                                    checker.className = `mini-checker ${pos[1]}`;
+                                    cell.appendChild(checker);
+                                }
+                            }
+                        }
+                    }
+                    
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        // Build Landscape Mobile Board
+        function buildLandscapeBoard() {
+            const board = document.getElementById('board5');
+            board.innerHTML = '';
+
+            // Top point numbers (13-18 | 19-24)
+            const topNums = document.createElement('div');
+            topNums.className = 'point-numbers';
+            topNums.style.gridColumn = '1';
+            topNums.style.gridRow = '1';
+            for (let i = 13; i <= 18; i++) {
+                const span = document.createElement('span');
+                span.textContent = i;
+                topNums.appendChild(span);
+            }
+            board.appendChild(topNums);
+
+            const topNumsRight = document.createElement('div');
+            topNumsRight.className = 'point-numbers';
+            topNumsRight.style.gridColumn = '3';
+            topNumsRight.style.gridRow = '1';
+            for (let i = 19; i <= 24; i++) {
+                const span = document.createElement('span');
+                span.textContent = i;
+                topNumsRight.appendChild(span);
+            }
+            board.appendChild(topNumsRight);
+
+            // Bar
+            const bar = document.createElement('div');
+            bar.className = 'bar-l';
+            const barText = document.createElement('span');
+            barText.textContent = 'BAR';
+            bar.appendChild(barText);
+            board.appendChild(bar);
+
+            // Top left quadrant (points 13-18)
+            const topLeft = document.createElement('div');
+            topLeft.className = 'quad top';
+            topLeft.style.gridColumn = '1';
+            topLeft.style.gridRow = '2';
+            for (let i = 13; i <= 18; i++) {
+                topLeft.appendChild(createLandscapePoint(i, 'top'));
+            }
+            board.appendChild(topLeft);
+
+            // Top right quadrant (points 19-24)
+            const topRight = document.createElement('div');
+            topRight.className = 'quad top';
+            topRight.style.gridColumn = '3';
+            topRight.style.gridRow = '2';
+            for (let i = 19; i <= 24; i++) {
+                topRight.appendChild(createLandscapePoint(i, 'top'));
+            }
+            board.appendChild(topRight);
+
+            // Bottom left quadrant (points 12-7)
+            const bottomLeft = document.createElement('div');
+            bottomLeft.className = 'quad bottom';
+            bottomLeft.style.gridColumn = '1';
+            bottomLeft.style.gridRow = '3';
+            for (let i = 12; i >= 7; i--) {
+                bottomLeft.appendChild(createLandscapePoint(i, 'bottom'));
+            }
+            board.appendChild(bottomLeft);
+
+            // Bottom right quadrant (points 6-1)
+            const bottomRight = document.createElement('div');
+            bottomRight.className = 'quad bottom';
+            bottomRight.style.gridColumn = '3';
+            bottomRight.style.gridRow = '3';
+            for (let i = 6; i >= 1; i--) {
+                bottomRight.appendChild(createLandscapePoint(i, 'bottom'));
+            }
+            board.appendChild(bottomRight);
+
+            // Bottom point numbers (12-7 | 6-1)
+            const bottomNums = document.createElement('div');
+            bottomNums.className = 'point-numbers bottom-nums';
+            bottomNums.style.gridColumn = '1';
+            bottomNums.style.gridRow = '4';
+            for (let i = 12; i >= 7; i--) {
+                const span = document.createElement('span');
+                span.textContent = i;
+                bottomNums.appendChild(span);
+            }
+            board.appendChild(bottomNums);
+
+            const bottomNumsRight = document.createElement('div');
+            bottomNumsRight.className = 'point-numbers bottom-nums';
+            bottomNumsRight.style.gridColumn = '3';
+            bottomNumsRight.style.gridRow = '4';
+            for (let i = 6; i >= 1; i--) {
+                const span = document.createElement('span');
+                span.textContent = i;
+                bottomNumsRight.appendChild(span);
+            }
+            board.appendChild(bottomNumsRight);
+        }
+
+        function createLandscapePoint(num, position) {
+            const point = document.createElement('div');
+            point.className = `point-l ${num % 2 === 0 ? 'dark' : 'light'}`;
+            
+            // Triangle element
+            const triangle = document.createElement('div');
+            triangle.className = 'triangle';
+            point.appendChild(triangle);
+            
+            // Add checkers
+            const pos = startingPosition[num];
+            if (pos) {
+                const count = pos[0];
+                const maxShow = 5;
+                const showCount = Math.min(count, maxShow);
+                
+                for (let i = 0; i < showCount; i++) {
+                    const checker = document.createElement('div');
+                    checker.className = `checker-l ${pos[1]}`;
+                    
+                    // If more than 5, show count on top checker
+                    if (count > maxShow && i === showCount - 1) {
+                        checker.classList.add('stacked');
+                        checker.setAttribute('data-count', count);
+                    }
+                    
+                    point.appendChild(checker);
+                }
+            }
+            
+            return point;
+        }
+
+        // Initialize boards
+        buildClassicBoard();
+        buildVerticalBoard();
+        buildMinimalBoard();
+        buildUltraBoard();
+        buildLandscapeBoard();
+    </script>
+</body>
+</html>
+
